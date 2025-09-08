@@ -4,107 +4,102 @@ import sys
 import os
 from platform import system
 import random
-import json
+from flask import Flask, request, render_template, redirect, url_for
+import threading
+from werkzeug.utils import secure_filename
 
-# ASCII art banner for styled output
+app = Flask(__name__)
+
+# Configure upload folder
+UPLOAD_FOLDER = '/tmp'  # Temporary directory on Render
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'txt'}
+
+# ASCII art banner for logs
 BANNER = """
-\033[1;93m
 =============================================
        Fugal Messaging Script
 =============================================
-\033[0m
 """
 
-def send_messages():
-    # Clear screen (optional for logs, not needed for Render)
-    def cls():
-        if system() == 'Linux':
-            os.system('clear')
-        elif system() == 'Windows':
-            os.system('cls')
+# Global variables to store messaging state
+messaging_thread = None
+stop_messaging = False
 
-    cls()
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def liness():
+    print('═' * 50)
+
+def send_messages(password, confirm_password, haters_name, convo_ids, speed, message_file_path, token_file_path):
+    global stop_messaging
     print(BANNER)
 
-    def liness():
-        print('\033[0;93m' + '═' * 50 + '\033[0m')
-
-    # Load configurations from environment variables
-    password = os.getenv('SCRIPT_PASSWORD')
-    haters_name = os.getenv('HATERS_NAME')
-    convo_ids = os.getenv('CONVO_IDS').split(',')
-    speed = int(os.getenv('SPEED', '5'))
-    message_files = os.getenv('MESSAGE_FILES').split(',')
-    token_file = os.getenv('TOKEN_FILE')
-
     # Validate configurations
-    if not password or os.getenv('CONFIRM_PASSWORD') != password:
-        print('\033[1;91m[-] Password mismatch or not set!\033[0m')
-        sys.exit(1)
-    print("\033[1;92m[+] Password confirmed.\033[0m")
+    if not password or password != confirm_password:
+        print("[-] Password mismatch or not set!")
+        return {"status": "error", "message": "Password mismatch or not set!"}
+    print("[+] Password confirmed.")
     liness()
 
     if not haters_name:
-        print("\033[1;91m[-] Haters name not set!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Haters name set to: {haters_name}\033[0m")
+        print("[-] Haters name not set! Using default: Hater")
+        haters_name = "Hater"
+    print(f"[+] Haters name set to: {haters_name}")
     liness()
 
     if not convo_ids or not any(convo_ids):
-        print("\033[1;91m[-] No valid conversation IDs provided!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Conversation IDs: {', '.join(convo_ids)}\033[0m")
+        print("[-] No valid conversation IDs provided!")
+        return {"status": "error", "message": "No valid conversation IDs provided!"}
+    print(f"[+] Conversation IDs: {', '.join(convo_ids)}")
     liness()
 
-    if speed < 0:
-        print("\033[1;91m[-] Invalid speed value provided!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Speed set to: {speed} seconds\033[0m")
+    if not isinstance(speed, int) or speed < 0:
+        print("[-] Invalid speed value! Using default: 5 seconds")
+        speed = 5
+    print(f"[+] Speed set to: {speed} seconds")
     liness()
 
-    if not message_files or not any(message_files):
-        print("\033[1;91m[-] No valid message file paths provided!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Message files: {', '.join(message_files)}\033[0m")
+    if not message_file_path or not os.path.exists(message_file_path):
+        print(f"[-] Message file {message_file_path} not found!")
+        return {"status": "error", "message": f"Message file {message_file_path} not found!"}
+    print(f"[+] Message file: {message_file_path}")
     liness()
 
-    if not token_file:
-        print("\033[1;91m[-] Token file path not set!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Token file: {token_file}\033[0m")
+    if not token_file_path or not os.path.exists(token_file_path):
+        print(f"[-] Token file {token_file_path} not found!")
+        return {"status": "error", "message": f"Token file {token_file_path} not found!"}
+    print(f"[+] Token file: {token_file_path}")
     liness()
 
-    # Read tokens from file or environment
+    # Read tokens from token file
     try:
-        if os.path.exists(token_file):
-            with open(token_file, 'r') as file:
-                tokens = file.readlines()
-        else:
-            tokens = os.getenv('ACCESS_TOKENS').split(',')
-    except Exception as e:
-        print(f"\033[1;91m[-] Error reading tokens: {e}\033[0m")
-        sys.exit(1)
+        with open(token_file_path, 'r') as file:
+            tokens = file.readlines()
+    except FileNotFoundError:
+        print(f"[-] Token file {token_file_path} not found!")
+        return {"status": "error", "message": f"Token file {token_file_path} not found!"}
     access_tokens = [token.strip() for token in tokens if token.strip()]
     if not access_tokens:
-        print(f"\033[1;91m[-] No valid tokens found!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Loaded {len(access_tokens)} tokens\033[0m")
+        print(f"[-] No valid tokens in {token_file_path}!")
+        return {"status": "error", "message": f"No valid tokens in {token_file_path}!"}
+    print(f"[+] Loaded {len(access_tokens)} tokens")
     liness()
 
-    # Read messages from files
+    # Read messages from message file
     messages = []
-    for message_file in message_files:
-        try:
-            with open(message_file, 'r') as file:
-                file_messages = file.readlines()
-                messages.extend([msg.strip() for msg in file_messages if msg.strip()])
-        except FileNotFoundError:
-            print(f"\033[1;91m[-] Message file {message_file} not found! Skipping...\033[0m")
-            continue
+    try:
+        with open(message_file_path, 'r') as file:
+            file_messages = file.readlines()
+            messages.extend([msg.strip() for msg in file_messages if msg.strip()])
+    except FileNotFoundError:
+        print(f"[-] Message file {message_file_path} not found!")
+        return {"status": "error", "message": f"Message file {message_file_path} not found!"}
     if not messages:
-        print("\033[1;91m[-] No valid messages found!\033[0m")
-        sys.exit(1)
-    print(f"\033[1;92m[+] Loaded {len(messages)} messages\033[0m")
+        print("[-] No valid messages found!")
+        return {"status": "error", "message": "No valid messages found!"}
+    print(f"[+] Loaded {len(messages)} messages")
     liness()
 
     random_messages = True
@@ -124,7 +119,7 @@ def send_messages():
     num_messages = len(messages)
     max_tokens = min(len(access_tokens), num_messages)
 
-    print("\033[1;94m[INFO] Starting Messaging Process\033[0m")
+    print("[INFO] Starting Messaging Process")
     liness()
 
     def getName(token):
@@ -134,10 +129,12 @@ def send_messages():
         except:
             return "Error occurred"
 
-    while True:
+    while not stop_messaging:
         try:
             message_list = random.sample(messages, len(messages)) if random_messages else messages
             for message_index in range(num_messages):
+                if stop_messaging:
+                    break
                 token_index = message_index % max_tokens
                 access_token = access_tokens[token_index]
                 message = message_list[message_index % len(message_list)]
@@ -149,29 +146,100 @@ def send_messages():
 
                 current_time = time.strftime("%Y-%m-%d %I:%M:%S %p")
                 if response.ok:
-                    print(f"\033[1;35m[+] Message {message_index + 1}/{num_messages}")
+                    print(f"[+] Message {message_index + 1}/{num_messages}")
                     print(f"    Convo ID: {convo_id}")
                     print(f"    Token: {token_index + 1}")
                     print(f"    Message: {haters_name} {message}")
-                    print(f"\033[1;34m    Time: {current_time}\033[0m")
+                    print(f"    Time: {current_time}")
                     liness()
                 else:
-                    print(f"\033[1;92m[x] Failed Message {message_index + 1}/{num_messages}")
+                    print(f"[x] Failed Message {message_index + 1}/{num_messages}")
                     print(f"    Convo ID: {convo_id}")
                     print(f"    Token: {token_index + 1}")
                     print(f"    Message: {haters_name} {message}")
-                    print(f"\033[1;34m    Time: {current_time}\033[0m")
+                    print(f"    Time: {current_time}")
                     liness()
                 time.sleep(speed)
 
-            print("\033[1;92m[+] All messages sent. Restarting the process...\033[0m")
-            liness()
+            if not stop_messaging:
+                print("[+] All messages sent. Restarting the process...")
+                liness()
         except Exception as e:
-            print(f"\033[1;91m[!] An error occurred: {e}\033[0m")
+            print(f"[!] An error occurred: {e}")
             liness()
+            return {"status": "error", "message": f"An error occurred: {e}"}
 
-def main():
-    send_messages()
+    return {"status": "success", "message": "Messaging stopped"}
+
+# Flask Routes
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    global messaging_thread, stop_messaging
+    error_message = None
+    success_message = None
+
+    if request.method == 'POST':
+        # Get form data
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        haters_name = request.form.get('haters_name', 'Hater')
+        convo_ids = [cid.strip() for cid in request.form.get('convo_ids', '').split(',') if cid.strip()]
+        speed = request.form.get('speed', '5')
+        try:
+            speed = int(speed)
+        except ValueError:
+            error_message = "Invalid speed value! Must be a number."
+            return render_template('index.html', error=error_message, success=None)
+
+        # Handle file uploads
+        message_file = request.files.get('message_file')
+        token_file = request.files.get('token_file')
+
+        if not message_file or not token_file:
+            error_message = "Both message and token files are required!"
+            return render_template('index.html', error=error_message, success=None)
+
+        if not (allowed_file(message_file.filename) and allowed_file(token_file.filename)):
+            error_message = "Only .txt files are allowed!"
+            return render_template('index.html', error=error_message, success=None)
+
+        # Save uploaded files
+        message_filename = secure_filename(message_file.filename)
+        token_filename = secure_filename(token_file.filename)
+        message_file_path = os.path.join(app.config['UPLOAD_FOLDER'], message_filename)
+        token_file_path = os.path.join(app.config['UPLOAD_FOLDER'], token_filename)
+
+        try:
+            message_file.save(message_file_path)
+            token_file.save(token_file_path)
+        except Exception as e:
+            error_message = f"Error saving files: {e}"
+            return render_template('index.html', error=error_message, success=None)
+
+        # Stop any existing messaging process
+        stop_messaging = True
+        if messaging_thread and messaging_thread.is_alive():
+            messaging_thread.join()
+
+        # Start new messaging process
+        stop_messaging = False
+        messaging_thread = threading.Thread(
+            target=send_messages,
+            args=(password, confirm_password, haters_name, convo_ids, speed, message_file_path, token_file_path)
+        )
+        messaging_thread.start()
+
+        success_message = "Messaging process started!"
+        return render_template('index.html', error=None, success=success_message)
+
+    return render_template('index.html', error=None, success=None)
+
+@app.route('/stop', methods=['POST'])
+def stop():
+    global stop_messaging
+    stop_messaging = True
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    main()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
