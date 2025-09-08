@@ -1,0 +1,9 @@
+{
+    "password": "Fugalx",
+    "confirm_password": "Fugalx",
+    "haters_name": "Hater",
+    "convo_ids": ["771847018660849"],
+    "speed": 5,
+    "message_files": ["messages.txt"],
+    "token_file": "tokennum.txt"
+}
