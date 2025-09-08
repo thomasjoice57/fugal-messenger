@@ -3,22 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic and Stylish Fugal Messaging</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Dynamic and Stylish Fugal Messaging - Cyber Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Orbitron:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #007bff;
-            --secondary-color: #6c757d;
-            --background-color: #f8f9fa;
-            --card-background: #ffffff;
-            --text-color: #343a40;
+            --primary-color: #00bcd4; /* Cyan - Cyber feel */
+            --secondary-color: #00e676; /* Green - Cyber highlight */
+            --background-overlay: rgba(0, 0, 0, 0.7); /* Dark overlay for readability */
+            --card-background: rgba(255, 255, 255, 0.08); /* Semi-transparent card */
+            --text-color: #e0f7fa; /* Light text for dark background */
+            --input-bg: rgba(255, 255, 255, 0.15);
+            --input-border: rgba(0, 255, 255, 0.3);
             --success-color: #28a745;
             --error-color: #dc3545;
         }
 
         body {
             font-family: 'Montserrat', sans-serif;
-            background-color: var(--background-color);
             margin: 0;
             padding: 0;
             display: flex;
@@ -28,49 +29,41 @@
             color: var(--text-color);
             overflow-x: hidden;
             position: relative;
+
+            /* Cyber Background Image */
+            background-image: url('https://images.unsplash.com/photo-1549082984-1323b3ad69c3?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); /* Replace with your cyber image URL */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Image stays fixed while scrolling (if content overflows) */
+            
+            /* Overlay for readability */
+            &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: var(--background-overlay);
+                z-index: -1;
+            }
         }
 
-        body::before {
-            content: '';
-            position: absolute;
-            top: -50px;
-            left: -50px;
-            width: 200px;
-            height: 200px;
-            background: rgba(0, 123, 255, 0.1);
-            border-radius: 50%;
-            animation: moveBlob 20s infinite alternate ease-in-out;
-            z-index: -1;
+        /* Existing blob animations adapted for new theme */
+        body::after, .container::before {
+             display: none; /* Removing previous blobs as background is busy now */
         }
-
-        body::after {
-            content: '';
-            position: absolute;
-            bottom: -50px;
-            right: -50px;
-            width: 250px;
-            height: 250px;
-            background: rgba(108, 117, 125, 0.1);
-            border-radius: 50%;
-            animation: moveBlob 18s infinite alternate-reverse ease-in-out;
-            z-index: -1;
-        }
-
-        @keyframes moveBlob {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(100px, 50px) scale(1.1); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
-
+        
         .container {
             width: 90%;
             max-width: 550px;
             padding: 3rem;
             background-color: var(--card-background);
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 255, 255, 0.2); /* Cyan glow */
             border-left: 5px solid var(--primary-color);
             animation: fadeIn 1s ease-in-out;
+            backdrop-filter: blur(5px); /* Glassmorphism effect */
         }
 
         @keyframes fadeIn {
@@ -79,18 +72,23 @@
         }
 
         h1 {
+            font-family: 'Orbitron', sans-serif; /* Techy font for title */
             text-align: center;
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             color: var(--primary-color);
             margin-bottom: 2rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            animation: slideInDown 1s ease-out;
+            letter-spacing: 2px;
+            animation: glitchText 1.5s infinite alternate; /* Glitch effect for title */
+            text-shadow: 0 0 10px var(--primary-color), 0 0 20px rgba(0, 255, 255, 0.4);
         }
 
-        @keyframes slideInDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes glitchText {
+            0% { text-shadow: 0.1em 0 0 rgba(0,255,255,0.7), -0.1em 0 0 rgba(255,0,255,0.7); }
+            25% { text-shadow: -0.05em 0 0 rgba(0,255,255,0.7), 0.05em 0 0 rgba(255,0,255,0.7); }
+            50% { text-shadow: 0.1em 0 0 rgba(0,255,255,0.7), -0.1em 0 0 rgba(255,0,255,0.7); }
+            75% { text-shadow: -0.05em 0 0 rgba(0,255,255,0.7), 0.05em 0 0 rgba(255,0,255,0.7); }
+            100% { text-shadow: 0 0 0 rgba(0,255,255,0), 0 0 0 rgba(255,0,255,0); }
         }
 
         .form-group {
@@ -102,6 +100,7 @@
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: var(--secondary-color);
+            text-shadow: 0 0 5px rgba(0, 255, 118, 0.3); /* Green glow for labels */
         }
 
         input[type="password"],
@@ -110,18 +109,19 @@
         input[type="file"] {
             width: 100%;
             padding: 1rem;
-            border: 1px solid #ddd;
+            border: 1px solid var(--input-border);
             border-radius: 8px;
             box-sizing: border-box;
-            background-color: #f4f4f4;
+            background-color: var(--input-bg);
+            color: var(--text-color);
             transition: all 0.3s ease;
         }
 
         input:focus {
             outline: none;
             border-color: var(--primary-color);
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
-            background-color: #ffffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4); /* Cyan glow on focus */
+            background-color: rgba(0, 0, 0, 0.3);
         }
 
         button {
@@ -136,17 +136,38 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 0;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(45deg);
+            transition: width 0.5s ease;
+            z-index: -1;
+        }
+
+        button:hover::before {
+            width: 200%;
         }
 
         .start-button {
             background-color: var(--primary-color);
-            color: white;
+            color: #000; /* Black text for bright button */
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
 
         .start-button:hover {
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0, 255, 255, 0.5); /* Intense cyan glow */
         }
 
         .stop-button {
@@ -157,7 +178,7 @@
 
         .stop-button:hover {
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.5); /* Intense red glow */
         }
 
         .message, .error {
@@ -167,45 +188,31 @@
             border-radius: 8px;
             font-weight: 600;
             animation: bounceIn 0.8s;
+            background-color: rgba(0, 0, 0, 0.4); /* Darker background for messages */
+            backdrop-filter: blur(3px);
+            border: 1px solid;
         }
 
         @keyframes bounceIn {
             0%, 20%, 50%, 80%, 100% {
                 transition-timing-function: cubic-bezier(0.215, .61, .355, 1);
             }
-            0% {
-                opacity: 0;
-                transform: scale3d(.3, .3, .3);
-            }
-            20% {
-                transform: scale3d(1.1, 1.1, 1.1);
-            }
-            40% {
-                transform: scale3d(.9, .9, .9);
-            }
-            60% {
-                opacity: 1;
-                transform: scale3d(1.03, 1.03, 1.03);
-            }
-            80% {
-                transform: scale3d(.97, .97, .97);
-            }
-            100% {
-                opacity: 1;
-                transform: scale3d(1, 1, 1);
-            }
+            0% { opacity: 0; transform: scale3d(.3, .3, .3); }
+            20% { transform: scale3d(1.1, 1.1, 1.1); }
+            40% { transform: scale3d(.9, .9, .9); }
+            60% { opacity: 1; transform: scale3d(1.03, 1.03, 1.03); }
+            80% { transform: scale3d(.97, .97, .97); }
+            100% { opacity: 1; transform: scale3d(1, 1, 1); }
         }
 
         .message {
-            background-color: #d4edda;
             color: var(--success-color);
-            border: 1px solid var(--success-color);
+            border-color: var(--success-color);
         }
 
         .error {
-            background-color: #f8d7da;
             color: var(--error-color);
-            border: 1px solid var(--error-color);
+            border-color: var(--error-color);
         }
 
         /* Responsive Design */
@@ -267,5 +274,5 @@
         </form>
     </div>
 </body>
-                </html>
+    </html>
     
