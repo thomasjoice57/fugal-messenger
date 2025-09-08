@@ -1,31 +1,37 @@
 import express from 'express';
-import path from 'path';
 import fetch from 'node-fetch';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import cors from 'cors';
+import multer from 'multer';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
+const upload = multer();
+app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-// Graph API messaging endpoint
-app.post('/send-message', async (req, res) => {
-  const { token, convoId, message } = req.body;
-  try {
-    const response = await fetch(`https://graph.facebook.com/v15.0/t_${convoId}/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ access_token: token, message })
-    });
-    const data = await response.json();
-    res.json({ status: 'success', data });
-  } catch (err) {
-    res.status(500).json({ status: 'error', error: err.message });
-  }
+app.post('/send-message', upload.none(), async (req, res) => {
+    const { access_token, message, convo_id } = req.body;
+    if (!access_token || !message || !convo_id) {
+        return res.status(400).json({ error: 'Missing fields' });
+    }
+
+    try {
+        const url = `https://graph.facebook.com/v17.0/${convo_id}/messages`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token, message })
+        });
+        const data = await response.json();
+        if (response.ok) {
+            return res.json({ success: true, data });
+        } else {
+            return res.status(400).json({ success: false, data });
+        }
+    } catch (err) {
+        return res.status(500).json({ success: false, error: err.message });
+    }
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
