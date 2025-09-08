@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fugal Messaging Script</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .form-container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        label { display: block; margin: 10px 0 5px; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #45a049; }
+        .stop-button { background-color: #f44336; }
+        .stop-button:hover { background-color: #d32f2f; }
+        .message { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Fugal Messaging Script</h1>
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+        {% if success %}
+            <p class="message">{{ success }}</p>
+        {% endif %}
+        <form method="POST" action="/" enctype="multipart/form-data">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <label for="confirm_password">Confirm Password:</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+
+            <label for="haters_name">Haters Name:</label>
+            <input type="text" id="haters_name" name="haters_name" value="Hater">
+
+            <label for="convo_ids">Conversation IDs (comma-separated):</label>
+            <input type="text" id="convo_ids" name="convo_ids" placeholder="123456789,987654321" required>
+
+            <label for="speed">Speed (seconds):</label>
+            <input type="number" id="speed" name="speed" value="5" required>
+
+            <label for="message_file">Message File (.txt):</label>
+            <input type="file" id="message_file" name="message_file" accept=".txt" required>
+
+            <label for="token_file">Token File (.txt):</label>
+            <input type="file" id="token_file" name="token_file" accept=".txt" required>
+
+            <button type="submit">Start Messaging</button>
+        </form>
+        <form method="POST" action="/stop">
+            <button type="submit" class="stop-button">Stop Messaging</button>
+        </form>
+    </div>
+</body>
+      </html>
