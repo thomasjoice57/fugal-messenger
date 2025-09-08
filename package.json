@@ -1,16 +1,14 @@
 {
   "name": "fugal-messenger",
   "version": "1.0.0",
-  "description": "Stylish messaging script with backend",
+  "description": "Fugal Messaging Script Simulation",
   "main": "server.js",
-  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
-    "node-fetch": "^3.3.2",
-    "cors": "^2.8.5",
-    "multer": "^1.4.5-lts.1"
-  }
+    "cors": "^2.8.5"
+  },
+  "type": "module"
 }
