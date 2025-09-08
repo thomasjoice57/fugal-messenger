@@ -1,59 +1,271 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fugal Messaging Script</title>
+    <title>Dynamic and Stylish Fugal Messaging</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h1 { color: #333; }
-        .form-container { max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
-        label { display: block; margin: 10px 0 5px; }
-        input, button { width: 100%; padding: 10px; margin: 5px 0; }
-        button { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #45a049; }
-        .stop-button { background-color: #f44336; }
-        .stop-button:hover { background-color: #d32f2f; }
-        .message { color: green; font-weight: bold; }
-        .error { color: red; font-weight: bold; }
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --text-color: #343a40;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text-color);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            background: rgba(0, 123, 255, 0.1);
+            border-radius: 50%;
+            animation: moveBlob 20s infinite alternate ease-in-out;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            width: 250px;
+            height: 250px;
+            background: rgba(108, 117, 125, 0.1);
+            border-radius: 50%;
+            animation: moveBlob 18s infinite alternate-reverse ease-in-out;
+            z-index: -1;
+        }
+
+        @keyframes moveBlob {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(100px, 50px) scale(1.1); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        .container {
+            width: 90%;
+            max-width: 550px;
+            padding: 3rem;
+            background-color: var(--card-background);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: slideInDown 1s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        input[type="password"],
+        input[type="text"],
+        input[type="number"],
+        input[type="file"] {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+            background-color: #f4f4f4;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+            background-color: #ffffff;
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .start-button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .start-button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .stop-button {
+            background-color: var(--error-color);
+            color: white;
+            margin-top: 1rem;
+        }
+
+        .stop-button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+        }
+
+        .message, .error {
+            text-align: center;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            animation: bounceIn 0.8s;
+        }
+
+        @keyframes bounceIn {
+            0%, 20%, 50%, 80%, 100% {
+                transition-timing-function: cubic-bezier(0.215, .61, .355, 1);
+            }
+            0% {
+                opacity: 0;
+                transform: scale3d(.3, .3, .3);
+            }
+            20% {
+                transform: scale3d(1.1, 1.1, 1.1);
+            }
+            40% {
+                transform: scale3d(.9, .9, .9);
+            }
+            60% {
+                opacity: 1;
+                transform: scale3d(1.03, 1.03, 1.03);
+            }
+            80% {
+                transform: scale3d(.97, .97, .97);
+            }
+            100% {
+                opacity: 1;
+                transform: scale3d(1, 1, 1);
+            }
+        }
+
+        .message {
+            background-color: #d4edda;
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="form-container">
+    <div class="container">
         <h1>Fugal Messaging Script</h1>
+
         {% if error %}
             <p class="error">{{ error }}</p>
         {% endif %}
         {% if success %}
             <p class="message">{{ success }}</p>
         {% endif %}
+
         <form method="POST" action="/" enctype="multipart/form-data">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-
-            <label for="confirm_password">Confirm Password:</label>
-            <input type="password" id="confirm_password" name="confirm_password" required>
-
-            <label for="haters_name">Haters Name:</label>
-            <input type="text" id="haters_name" name="haters_name" value="Hater">
-
-            <label for="convo_ids">Conversation IDs (comma-separated):</label>
-            <input type="text" id="convo_ids" name="convo_ids" placeholder="123456789,987654321" required>
-
-            <label for="speed">Speed (seconds):</label>
-            <input type="number" id="speed" name="speed" value="5" required>
-
-            <label for="message_file">Message File (.txt):</label>
-            <input type="file" id="message_file" name="message_file" accept=".txt" required>
-
-            <label for="token_file">Token File (.txt):</label>
-            <input type="file" id="token_file" name="token_file" accept=".txt" required>
-
-            <button type="submit">Start Messaging</button>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+            <div class="form-group">
+                <label for="haters_name">Haters Name:</label>
+                <input type="text" id="haters_name" name="haters_name" value="Hater">
+            </div>
+            <div class="form-group">
+                <label for="convo_ids">Conversation IDs (comma-separated):</label>
+                <input type="text" id="convo_ids" name="convo_ids" placeholder="123456789,987654321" required>
+            </div>
+            <div class="form-group">
+                <label for="speed">Speed (seconds):</label>
+                <input type="number" id="speed" name="speed" value="5" required>
+            </div>
+            <div class="form-group">
+                <label for="message_file">Message File (.txt):</label>
+                <input type="file" id="message_file" name="message_file" accept=".txt" required>
+            </div>
+            <div class="form-group">
+                <label for="token_file">Token File (.txt):</label>
+                <input type="file" id="token_file" name="token_file" accept=".txt" required>
+            </div>
+            <button type="submit" class="start-button">Start Messaging</button>
         </form>
+
         <form method="POST" action="/stop">
             <button type="submit" class="stop-button">Stop Messaging</button>
         </form>
     </div>
 </body>
-      </html>
+                </html>
+    
