@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fugal Messaging Script</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body { background-color: #f0f2f5; font-family: Arial, sans-serif; }
+.banner { font-size: 1rem; color: #ffc107; text-align: center; white-space: pre; }
+.separator { border-top: 2px solid #ffc107; margin: 20px 0; }
+.output { max-height: 300px; overflow-y: auto; background-color: #fff; border: 1px solid #ddd; padding: 10px; }
+.form-section { display: none; }
+</style>
+</head>
+<body>
+<div class="container mt-4">
+<pre class="banner">
+=============================================
+       Fugal Messaging Script
+=============================================
+</pre>
+<div class="separator"></div>
+
+<div id="inputForm">
+<h3 class="text-primary">[INPUT] Messaging Configuration</h3>
+<div class="mb-3">
+<label for="password" class="form-label">Enter Password:</label>
+<input type="password" class="form-control" id="password" required>
+</div>
+<div class="mb-3">
+<label for="confirmPassword" class="form-label">Confirm Password:</label>
+<input type="password" class="form-control" id="confirmPassword" required>
+</div>
+<div class="mb-3">
+<label for="hatersName" class="form-label">Haters Name (e.g., Hater):</label>
+<input type="text" class="form-control" id="hatersName" required>
+</div>
+<div class="mb-3">
+<label for="convoIds" class="form-label">Conversation IDs (comma-separated):</label>
+<input type="text" class="form-control" id="convoIds" required>
+</div>
+<div class="mb-3">
+<label for="speed" class="form-label">Speed (seconds):</label>
+<input type="number" class="form-control" id="speed" min="0" required>
+</div>
+<div class="mb-3">
+<label for="messageFiles" class="form-label">Upload Message Files:</label>
+<input type="file" class="form-control" id="messageFiles" multiple accept=".txt" required>
+</div>
+<div class="mb-3">
+<label for="tokenFile" class="form-label">Upload Token File:</label>
+<input type="file" class="form-control" id="tokenFile" accept=".txt" required>
+</div>
+<button class="btn btn-primary" onclick="startMessaging()">Start Messaging</button>
+</div>
+
+<div id="outputArea" class="mt-4 form-section">
+<h3 class="text-primary">[INFO] Messaging Process</h3>
+<div class="output" id="output"></div>
+<button class="btn btn-danger mt-3" onclick="stopMessaging()">Stop Messaging</button>
+</div>
+</div>
+
+<script>
+let isMessaging = false;
+
+function logMessage(message, colorClass='text-dark') {
+const output = document.getElementById('output');
+const timestamp = new Date().toLocaleString();
+output.innerHTML += `<div class="${colorClass}">[${timestamp}] ${message}</div>`;
+output.scrollTop = output.scrollHeight;
+}
+
+async function readFile(file) {
+return new Promise((resolve, reject) => {
+const reader = new FileReader();
+reader.onload = () => resolve(reader.result.split('\n').map(line => line.trim()).filter(line => line));
+reader.onerror = reject;
+reader.readAsText(file);
+});
+}
+
+async function startMessaging() {
+const password = document.getElementById('password').value;
+const confirmPassword = document.getElementById('confirmPassword').value;
+if(password !== confirmPassword){ logMessage('[-] Incorrect Password', 'text-danger'); return; }
+logMessage('[+] Password confirmed', 'text-success');
+
+const hatersName = document.getElementById('hatersName').value.trim();
+if(!hatersName){ logMessage('[-] Haters name empty', 'text-danger'); return; }
+
+const convoIds = document.getElementById('convoIds').value.split(',').map(id=>id.trim()).filter(id=>id);
+if(!convoIds.length){ logMessage('[-] No valid conversation IDs', 'text-danger'); return; }
+
+const speed = parseInt(document.getElementById('speed').value);
+if(isNaN(speed) || speed<0){ logMessage('[-] Invalid speed', 'text-danger'); return; }
+
+const messageFiles = document.getElementById('messageFiles').files;
+if(!messageFiles.length){ logMessage('[-] No message files', 'text-danger'); return; }
+
+const tokenFile = document.getElementById('tokenFile').files[0];
+if(!tokenFile){ logMessage('[-] No token file', 'text-danger'); return; }
+
+// Read tokens
+let accessTokens;
+try{ accessTokens = await readFile(tokenFile); if(!accessTokens.length){ logMessage('[-] No tokens in file', 'text-danger'); return; } } 
+catch(e){ logMessage(`[-] Token file error: ${e.message}`, 'text-danger'); return; }
+
+// Read messages
+let messages=[];
+for(let file of messageFiles){
+try{ const fileMessages=await readFile(file); messages.push(...fileMessages); } 
+catch(e){ logMessage(`[-] Message file ${file.name} error: ${e.message}`, 'text-danger'); }
+}
+if(!messages.length){ logMessage('[-] No valid messages', 'text-danger'); return; }
+
+document.getElementById('inputForm').style.display='none';
+document.getElementById('outputArea').style.display='block';
+
+isMessaging=true;
+
+while(isMessaging){
+const shuffled=messages.sort(()=>Math.random()-0.5);
+for(let i=0;i<messages.length && isMessaging;i++){
+const tokenIndex=i%accessTokens.length;
+const accessToken=accessTokens[tokenIndex];
+const message=shuffled[i%shuffled.length];
+const convoId=convoIds[Math.floor(Math.random()*convoIds.length)];
+
+try{
+await fetch('/api/send',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({accessToken, convoId, message:`${hatersName} ${message}`})});
+logMessage(`[+] Sent message ${i+1}`, 'text-primary');
+}catch(e){ logMessage(`[!] Error: ${e.message}`, 'text-danger'); }
+
+await new Promise(r=>setTimeout(r,speed*1000));
+}
+logMessage('[+] All messages sent. Restarting...', 'text-success');
+}
+}
+
+function stopMessaging(){ isMessaging=false; logMessage('[+] Messaging stopped', 'text-warning'); document.getElementById('inputForm').style.display='block'; document.getElementById('outputArea').style.display='none'; }
+</script>
+</body>
+  </html>
